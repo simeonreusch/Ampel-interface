@@ -4,13 +4,12 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 14.12.2017
-# Last Modified Date: 14.09.2018
+# Last Modified Date: 18.01.2019
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import operator
 from types import MappingProxyType
 from ampel.base.Frozen import Frozen
-from ampel.base.flags.AmpelFlags import AmpelFlags
 
 class AmpelAlert(Frozen):
 	"""
@@ -20,7 +19,6 @@ class AmpelAlert(Frozen):
 	Then, the AmpelAlert instance is fed to every active T0 filter.
 	"""
 
-	flags = AmpelFlags(0)
 	alert_keywords = {}
 	alert_kws_set = set()
 
@@ -58,15 +56,6 @@ class AmpelAlert(Frozen):
 				tuple(MappingProxyType(d) for d in al['prv_candidates'] if d.get('candid') is None)
 			)
 
-	@classmethod
-	def set_class_flags(cls, arg_flags):
-		"""
-		Set alert flags (ampel.base.flags.AmpelFlags) of this alert.
-		Typically: observing instrument, alert issuer.
-		For example: AmpelFlags.INST_ZTF|AmpelFlags.SRC_IPAC
-		"""
-		cls.flags = arg_flags
-
 
 	@classmethod
 	def set_alert_keywords(cls, alert_keywords):
@@ -84,14 +73,6 @@ class AmpelAlert(Frozen):
 		"""
 		cls.alert_keywords = alert_keywords
 		cls.alert_kws_set = set(alert_keywords.keys())
-
-
-	@classmethod
-	def has_flags(cls, arg_flags):
-		"""
-		ex: AmpelAlert.has_flags(AmpelFlags.INST_ZTF)
-		"""
-		return arg_flags in cls.flags
 
 
 	def __init__(self, tran_id, list_of_pps, list_of_uls=None):
