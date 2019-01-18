@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/base/flags/PhotoFlags.py
+# File              : ampel/base/flags/PhotoFlag.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 14.12.2017
@@ -9,7 +9,7 @@
 
 from abc import ABCMeta
 
-class PhotoFlags(metaclass=ABCMeta):
+class PhotoFlag(metaclass=ABCMeta):
 	"""
 	"""
 
