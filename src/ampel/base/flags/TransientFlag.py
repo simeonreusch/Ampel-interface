@@ -7,12 +7,15 @@
 # Last Modified Date: 18.01.2019
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
-from abc import ABCMeta
 
-class TransientFlag(metaclass=ABCMeta):
-	"""
-	"""
-	HAS_ERROR                   = ()
-	HAS_TNS_NAME                = ()
-	MIXED_DATA_SOURCE           = ()
-	T1_AUTO_COMPLETE            = ()
+class TransientFlag():
+	""" """
+
+	# Force subclassing
+	def __init__(self):
+		raise NotImplementedError() 
+
+	HAS_ERROR                   = None
+	HAS_TNS_NAME                = None
+	MIXED_DATA_SOURCE           = None
+	T1_AUTO_COMPLETE            = None

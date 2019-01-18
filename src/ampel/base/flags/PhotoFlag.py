@@ -7,17 +7,19 @@
 # Last Modified Date: 18.01.2019
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
-from abc import ABCMeta
 
-class PhotoFlag(metaclass=ABCMeta):
-	"""
-	"""
+class PhotoFlag:
+	""" """
 
-	PHOTOPOINT                = ()
-	UPPERLIMIT                = ()
-	SUPERSEDED                = ()
+	# Force subclassing
+	def __init__(self):
+		raise NotImplementedError() 
 
-	IMAGE_BAD_CALIBRATION     = ()
-	IMAGE_ARTIFACT            = ()
-	IMAGE_TRACKING_PBLM       = ()
-	IMAGE_FOCUS_PBLM          = ()
+	PHOTOPOINT                = None
+	UPPERLIMIT                = None
+	SUPERSEDED                = None
+
+	IMAGE_BAD_CALIBRATION     = None
+	IMAGE_ARTIFACT            = None
+	IMAGE_TRACKING_PBLM       = None
+	IMAGE_FOCUS_PBLM          = None
