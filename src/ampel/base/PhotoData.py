@@ -9,7 +9,7 @@
 
 from types import MappingProxyType
 from ampel.base.Frozen import Frozen
-from ampel.base.flags.PhotoFlags import PhotoFlags
+from ampel.base.flags.PhotoFlag import PhotoFlag
 
 class PhotoData(Frozen):
 	"""
@@ -26,7 +26,7 @@ class PhotoData(Frozen):
 
 	default_keywords = {
 		'ZTFIPAC': {
-			"obs_date": "jd",
+			"obsDate": "jd",
 			"filter_id": "fid",
 			"mag": "magpsf",
 			"maglim": "diffmaglim",
@@ -42,16 +42,10 @@ class PhotoData(Frozen):
 		PhotoData.default_keywords = keywords
 
 
-	def __init__(self, content, flags=None, read_only=True):
+	def __init__(self, content, flag=None, keywords=None, read_only=True):
 
-		# Check flags and set field keywords accordingly
-	        # pylint: disable=no-member
-		if flags is not None and PhotoFlags.INST_ZTF|PhotoFlags.SRC_IPAC in flags:
-			self.keywords = PhotoData.default_keywords['ZTFIPAC']
-		else:
-			self.keywords = {}
-
-		self.flags = flags
+		self.flag = flag
+		self.keywords = {} if keywords is None else keywords
 
 		# Check wether to freeze this instance.
 		if read_only:
@@ -60,12 +54,14 @@ class PhotoData(Frozen):
 		else:
 			self.content = content
 
+
 	def serialize(self):
-		return {"content": self.content, "flags": self.flags}
+		""" """
+		return {"content": self.content, "flag": self.flag}
+
 
 	def get_value(self, field_name):
-		"""
-		"""
+		""" """
 		return self.content[
 			self.keywords[field_name] if field_name in self.keywords	
 			else field_name
@@ -86,19 +82,19 @@ class PhotoData(Frozen):
 		)
 	
 
-	def has_flags(self, arg_flags):
+	def has_flag(self, arg_flag):
 		"""
-		arg_flags: can be:
-			* an enumflag: has_flags() will return True or False
-			* a list of enumflags: has_flags() will return a list containing booleans
+		arg_flag: can be:
+			* an enumflag: has_flag() will return True or False
+			* a list of enumflag: has_flag() will return a list containing booleans
 		"""
-		if self.flags is None:
+		if self.flag is None:
 			return False
 
-		if type(arg_flags) is list:
-			return [f for f in arg_flags in self.flags if f in self.flags]
+		if type(arg_flag) is list:
+			return [f for f in arg_flag in self.flag if f in self.flag]
 
-		return arg_flags in self.flags
+		return arg_flag in self.flag
 
 
 	def has_parameter(self, field_name):
