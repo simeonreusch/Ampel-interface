@@ -8,7 +8,7 @@ class Compound:
 	comp: Any = None
 	added: Any = None
 	alDocType: Any = None
-	alFlags: Any = None
+	alTags: Any = None
 	lastJD: Any = None
 	len: int = None
 	ppId: Any = None

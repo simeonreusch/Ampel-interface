@@ -140,7 +140,7 @@ class LightCurve(Frozen):
 		examples::
 			
 			instance.get_pos(
-				"brightest", {'attribute': 'alFlags', 'operator': 'in', 'value': PhotoFlags.ZTF_G}
+				"brightest", {'attribute': 'alTags', 'operator': 'in', 'value': PhotoFlags.ZTF_G}
 			)
 		
 		returns the position of the brightest PhotoPoint in the ZTF G band
