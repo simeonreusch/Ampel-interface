@@ -82,7 +82,7 @@ class AmpelAlert(Frozen):
 		:param alertid: unique identifier of the alert (for ZTF: candid of most recent photopoint)
 		:param tran_id: the astronomical transient object ID, for ZTF IPAC alerts 'objectId'
 		:param list_of_pps: a flat list of photopoint dictionaries. 
-		Ampel makes sure that each dictionary contains an alFlags key 
+		Ampel makes sure that each dictionary contains an alTags key 
 		"""
 		self.tran_id = tran_id
 		self.pps = list_of_pps
