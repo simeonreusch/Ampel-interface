@@ -4,12 +4,11 @@
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 13.01.2018
-# Last Modified Date: 04.07.2018
+# Last Modified Date: 21.02.2019
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from types import MappingProxyType
 from ampel.base.Frozen import Frozen
-from ampel.base.flags.PhotoFlag import PhotoFlag
 
 class PhotoData(Frozen):
 	"""
@@ -42,9 +41,8 @@ class PhotoData(Frozen):
 		PhotoData.default_keywords = keywords
 
 
-	def __init__(self, content, flag=None, keywords=None, read_only=True):
+	def __init__(self, content, keywords=None, read_only=True):
 
-		self.flag = flag
 		self.keywords = {} if keywords is None else keywords
 
 		# Check wether to freeze this instance.
@@ -57,7 +55,7 @@ class PhotoData(Frozen):
 
 	def serialize(self):
 		""" """
-		return {"content": self.content, "flag": self.flag}
+		return {"content": self.content}
 
 
 	def get_value(self, field_name):
@@ -81,21 +79,6 @@ class PhotoData(Frozen):
 			]
 		)
 	
-
-	def has_flag(self, arg_flag):
-		"""
-		arg_flag: can be:
-			* an enumflag: has_flag() will return True or False
-			* a list of enumflag: has_flag() will return a list containing booleans
-		"""
-		if self.flag is None:
-			return False
-
-		if type(arg_flag) is list:
-			return [f for f in arg_flag in self.flag if f in self.flag]
-
-		return arg_flag in self.flag
-
 
 	def has_parameter(self, field_name):
 		"""
