@@ -8,14 +8,11 @@
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 from ampel.base.Frozen import Frozen
-import hashlib, sys
 
 
 class AmpelTags(Frozen):
 	"""
 	"""
-
-	hashes = {}
 
 	general = (
 		"HAS_ERROR", 
@@ -47,25 +44,3 @@ class AmpelTags(Frozen):
 		"MIXED_DATA_SOURCE",
 		"T1_AUTO_COMPLETED"
 	)
-
-	@staticmethod
-	def add_hashes(cls):
-		"""
-		*static* method accepting cls as argument so that say AmpelTags.add_hashes(ZITags) is possible 
-		"""
-		for el in [getattr(cls, name) for name in ("general", "data", "compound", "transient") if hasattr(cls, name)]:
-			for ell in el:
-				AmpelTags.hashes[ell] = int.from_bytes(
-					# don't undestand why pylint complains about  digest_size
-					# pylint: disable=unexpected-keyword-arg
-					hashlib.blake2b(
-						bytes(ell, "ascii"), 
-						digest_size=7
-					).digest(), 
-					byteorder=sys.byteorder
-				)
-	
-		if len(AmpelTags.hashes) != len(set(AmpelTags.hashes.values())):
-			raise ValueError("Hash collision detected")
-
-AmpelTags.add_hashes(AmpelTags)
