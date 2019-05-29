@@ -29,6 +29,7 @@ def generate_new():
 		return object.__new__(cls)
 	return __new__
 
+
 class AmpelABC(type):
 	"""
 	Metaclass with similar functionalities than the python standart ABC module 
@@ -39,6 +40,9 @@ class AmpelABC(type):
 	"""
 	
 	def __new__(cls, name, bases, d):
+		"""
+		:returns: a class
+		"""
 		
 		# no bases means we deal with the abstract class itself
 		if len(bases) == 0:
