@@ -20,11 +20,11 @@ def abstractmethod(func):
 
 class AmpelABC(type):
 	"""
-	Metaclass that implements similar functionalities to python standart 
-	ABC module (Abstract Base Class) while additionaly checking method signatures.
-	As a consequence, a child class that extends a parent class whose 
-	metaclass is AmpelABC, will not be able to implement the abstract methods 
-	of the parent class with different method arguments.
+	Metaclass with similar functionalities than the python standart ABC module 
+	(Abstract Base Class) but that does additionaly check method signatures.
+	As a consequence, a child class that extends a parent class defined with metaclass=AmpelABC, 
+	will not be able to implement any defined abstract methods using different parameters
+	than the one specified in the parent abstract class.
 	"""
 
 	_abstract_methods = set()
@@ -34,8 +34,7 @@ class AmpelABC(type):
 	def generate_new(abclass):
 		"""
 		Forbids instantiation of abstract classes.
-		The function generated in this function is included
-		in the abstract base class.
+
 		:param abclass: the abstract base *class*
 		:returns: the method __new__
 		"""
@@ -49,10 +48,10 @@ class AmpelABC(type):
 	@staticmethod
 	def generate__init_subclass__(abclass):
 		"""
+		The function generate__init_subclass__ generates an __init_subclass__ function.
+		It is called automcatically by the child class during class creation.
 		__init_subclass__() was added to Python 3.6 and allows customisation of class creation.
-		It is a method of a parent class called by the child class during class creation.
-		The function generate__init_subclass__ generates an __init_subclass__ function 
-		that checks if the signatures of the abstract methods of the parent object
+		Here, we check if the signatures of the abstract methods of the parent object
 		are equal to the signatures of the child object.
 
 		:param abclass: the abstract base *class*
@@ -66,12 +65,12 @@ class AmpelABC(type):
 
 			for method_name in cls._abstract_methods:
 	
-				# Check if method was implemented by child
+				# Check if method is implemented by child
 				func = getattr(cls, method_name, False)
 				if func:
 					if func.__qualname__.split(".")[0] == abclass.__name__:
 						raise NotImplementedError(
-							"Method " + method_name  + " is not implemented"
+							"Method %s is not implemented" % method_name
 						)
 	
 				# Check if method signatures are equal
