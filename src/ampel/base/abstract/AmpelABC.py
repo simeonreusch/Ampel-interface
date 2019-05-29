@@ -13,26 +13,21 @@ import inspect, types
 def abstractmethod(func):
 	"""
 	Custom decorator to mark selected method as abstract.
-	It populates the static array "_abstract_methods" of class AmpelABC.
 	"""
-	func.__dict__['abstract'] = True 
+	func.__dict__['__abstract__'] = True 
 	return func
 
 
-def generate_new(abclass):
+def generate_new():
 	"""
 	Forbids instantiation of abstract classes.
-
-	:param abclass: the abstract base *class*
-	:returns: the method __new__
+	:returns: method __new__
 	"""
-	def __new__(mcs, *args, **kwargs):
-		if (mcs is abclass):
-			raise TypeError("Abstract class "+ abclass.__name__ + " cannot be instantiated")
-		return object.__new__(mcs)
-
+	def __new__(cls, *args, **kwargs):
+		if "__abstract__" in cls.__dict__:
+			raise TypeError("Abstract class cannot be instantiated")
+		return object.__new__(cls)
 	return __new__
-
 
 class AmpelABC(type):
 	"""
@@ -48,7 +43,8 @@ class AmpelABC(type):
 		# no bases means we deal with the abstract class itself
 		if len(bases) == 0:
 			abclass = type.__new__(cls, name, bases, d)
-			setattr(abclass, "__new__", generate_new(abclass))
+			setattr(abclass, "__new__", generate_new())
+			setattr(abclass, "__abstract__", True)
 			return abclass
 		
 		# we ignore further sub-classing
@@ -58,7 +54,7 @@ class AmpelABC(type):
 		# Loop through abstract methods of parent abstract class
 		for func_name, func in bases[0].__dict__.items():
 			
-			if not isinstance(func, types.FunctionType) or 'abstract' not in func.__dict__:
+			if not isinstance(func, types.FunctionType) or '__abstract__' not in func.__dict__:
 				continue
 				
 			if func_name not in d.keys():
