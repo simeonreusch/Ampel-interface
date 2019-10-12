@@ -1,129 +1,112 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/base/abstract/AmpelABC.py
+# File              : ampel/abstract/AmpelABC.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 27.12.2017
-# Last Modified Date: 15.09.2018
+# Last Modified Date: 27.10.2019
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import inspect
 
 def abstractmethod(func):
-	"""
-	Custom decorator to mark selected method as abstract.
-	It populates the static array "_abstract_methods" of class AmpelABC.
-	"""
-	AmpelABC._abstract_methods.add(func.__name__)
+	""" Custom decorator to mark selected method as abstract. """
+	func.abstractmethod = True
 	return func
+
+
+def raise_error(cls, **kwargs):
+	"""
+	Abstract classes cannot be instantiated
+	:raises: TypeError
+	"""
+	raise TypeError(
+		f"Class {cls.__name__} is abstract and can thus not be instantiated"
+	)
+
+
+# pylint: disable=unused-argument
+def __std_new__(mcs, *arg, **kwargs):
+	""" Standard class creation """
+	cls = None
+	for el in mcs.__mro__:
+		# stop at first built-in type ('object' by defaut, or say 'dict' for example if 
+		# the abstract subclass inherits from a python primitive type.
+		# Avoids this kind of error: TypeError: object.__new__(MyDict) is not safe, use dict.__new__()
+		if '__new__' in el.__dict__ and type(el.__dict__['__new__']).__name__ == "builtin_function_or_method":
+			cls = el
+			break
+	return cls.__new__(mcs)
 
 
 class AmpelABC(type):
 	"""
 	Metaclass that implements similar functionalities to python standart 
 	ABC module (Abstract Base Class) while additionaly checking method signatures.
-	As a consequence, a child class that extends a parent class whose 
+	As a consequence, a child class that extends a class whose 
 	metaclass is AmpelABC, will not be able to implement the abstract methods 
 	of the parent class with different method arguments.
+	Signature checking can be disabled by setting AmpelABC.enforce_signature=False
+	Notes:
+	- Multi-level and multiple inheritance are supported.
+	- Overriding abstractmethod is supported (if subclass itself is abstract)
+	- This class relies on the module 'inspect'
+	- Setting AmpelABC.enforce_signature = False deactivates signatures check
 	"""
 
-	_abstract_methods = set()
+	enforce_signature = True
 
-
-	@staticmethod
-	def generate_new(abclass):
-		"""
-		Forbids instantiation of abstract classes.
-		The function generated in this function is included
-		in the abstract base class.
-		:param abclass: the abstract base *class*
-		:returns: the method __new__
-		"""
-		def __new__(mcs, *args, **kwargs):
-			if (mcs is abclass):
-				raise TypeError("Abstract class "+ abclass.__name__ + " cannot be instantiated")
-			return object.__new__(mcs)
-		return __new__
-
-
-	@staticmethod
-	def generate__init_subclass__(abclass):
-		"""
-		__init_subclass__() was added to Python 3.6 and allows customisation of class creation.
-		It is a method of a parent class called by the child class during class creation.
-		The function generate__init_subclass__ generates an __init_subclass__ function 
-		that checks if the signatures of the abstract methods of the parent object
-		are equal to the signatures of the child object.
-
-		:param abclass: the abstract base *class*
-		:raises NotImplementedError: if the child object does not implement a required abstract method
-		:rases ValueError exception: if the child object does implement an abstract method 
-		with a divergent signature
-		:returns: the method __init_subclass__
-		"""
-
-		def __init_subclass__(cls):
-
-			for method_name in cls._abstract_methods:
-	
-				# Check if method was implemented by child
-				func = getattr(cls, method_name, False)
-				if func:
-					if func.__qualname__.split(".")[0] == abclass.__name__:
-						raise NotImplementedError(
-							"Method " + method_name  + " is not implemented"
-						)
-	
-				# Check if method signatures are equal
-				abstract_sig = inspect.signature(getattr(abclass, method_name))
-				child_sig = inspect.signature(getattr(cls, method_name))
-	
-				# Check that number of parameters are equal rather than checking 
-				# if parameter names are identical (if abstract_sig != child_sig)
-				if len(abstract_sig.parameters) != len(child_sig.parameters):
-					raise ValueError(
-						"Method " + method_name +
-						"() has a wrong signature, please check defined arguments"
-					)
-	
-		return __init_subclass__
-
-
-	def __new__(metacls, name, bases, d):
+	def __new__(cls, name, bases, d, **kwargs):
 		"""
 		Creates the class
+		:raises NotImplementedError: if an abstract method is not implemented by the child class
+		:raises TypeError: if method signatures differ between an abstract method and the \
+		corresponding implementation by the child class (provided AmpelABC.enforce_signature is True)
 		"""
+		
+		Klass = type.__new__(cls, name, bases, d)
 
-		# If the static array _abstract_methods is populated, 
-		# then we are creating the abstract base class
-		if len(AmpelABC._abstract_methods) > 0:
+		# Class is abstract
+		if not bases or kwargs.get('abstract'):
+			setattr(Klass, '__new__', raise_error)
+			
+		else:
+			setattr(Klass, '__new__', __std_new__)	
 
-			# reference empty list of abstract methods in the abstract base class properties
-			d['_abstract_methods'] = []
+			if AmpelABC.enforce_signature:
 
-			# add the abstract method names (the ones marked with custom decorator) to class properties
-			for el in AmpelABC._abstract_methods:
-				d['_abstract_methods'].append(el)
+				# Gather abstract methods (marked by the decorator @abstractmethod)
+				abs_methods = {
+					method_name: (base_cls, method) 
+					for base in bases
+						for base_cls in reversed(base.mro())
+							for method_name, method in base_cls.__dict__.items()
+								if hasattr(method, "abstractmethod")
+				}
 
-			# reset static array (AmpelABC should be usable by different classes)
-			AmpelABC._abstract_methods = set()
+				# Check implementation
+				for method_name, value in abs_methods.items():
 
-			# Generated custom __init_subclass__() method. 
-			# Since this function requires a reference to the *class* (getattr(abclass, method_name)), 
-			# and since we don't have one yet (we are creating it), we create one on the fly 
-			# just for the sake of generating a working __init_subclass__() method 
-			d['__init_subclass__'] = AmpelABC.generate__init_subclass__(
-				type.__new__(metacls, name, bases, d)
-			)
+					# Check if method was implemented by child
+					func = getattr(Klass, method_name)
+					if func.__qualname__.split(".")[0] == value[0].__name__:
+						raise NotImplementedError(
+							f"Class {name} must implement abstract method "
+							f"{method_name} defined in class {value[0].__name__}"
+						)
 
-			# It gets trickier here. To forbid instantiation of the abstract base class
-			# we customize the method __new__ of the ab class.
-			# We thereby check if the provided class parameter *is* the abstract class.
-			# For *is* to return true, we need to create the abstract class now and 
-			# later insert the method __new__ to the class attributes. 
-			# Only then, 'is' will return True for the ab class and False for the child class
-			abclass = type.__new__(metacls, name, bases, d)
-			setattr(abclass, '__new__', AmpelABC.generate_new(abclass))
-			return abclass
+					# Get method signatures
+					abstract_sig = inspect.signature(value[1])
+					impl_sig = inspect.signature(
+						getattr(Klass, method_name)
+					)
 
-		return type.__new__(metacls, name, bases, d)
+					# Check for equality
+					if abstract_sig.parameters.keys() != impl_sig.parameters.keys():
+						raise TypeError(
+							f"Wrong method signature. Please change the arguments of method "
+							f"'{method_name}' to match those defined by the corresponding "
+							f"abstract method in class {value[0].__name__}"
+						)
+		
+		return Klass
