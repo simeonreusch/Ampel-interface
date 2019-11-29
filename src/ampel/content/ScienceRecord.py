@@ -1,47 +1,52 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/base/ScienceRecord.py
+# File              : ampel/content/ScienceRecord.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 13.01.2018
-# Last Modified Date: 16.08.2018
+# Last Modified Date: 20.12.2019
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
-from dataclasses import dataclass
-from typing import List, Dict
-from bson import Binary
+from typing import Sequence, Union, Optional
+from dataclasses import dataclass, _MISSING_TYPE
+none_type = type(None)
 
 
 @dataclass(frozen=True)
 class ScienceRecord:
-	"""
-	tran_id: transient id
-	t2_unit_id: T2 unit id
-	compound_id: Compound id
-	results: T2 unit return values
-	info: extra info
-	"""
-	tran_id: int
-	t2_unit_id: str
-	compound_id: Binary
-	results: List[Dict]
-	info: dict = None
 
-	def get_results(self):
-		""" """
-		return self.results
+	id: bytes
+	unit: Union[int, str] # int to enable future potential hash optimizations
+	link: bytes
+	col: Optional[str]
+	tags: Optional[Sequence[Union[int, str]]]
+	stock: Union[int, str, Sequence[Union[int, str]]]
+	channels: Sequence[Union[int, str]]
+	results: Sequence[dict] # value(s) returned by t2 unit execution(s)
+	config: dict
+	state: int
 
+	# Ignore extras, enable aliases, set defaults (none for now)
+	def __init__(self, **kwargs):
 
-	def get_t2_unit_id(self):
-		""" """
-		return self.t2_unit_id
+		# pylint: disable=no-member
+		fields = self.__dataclass_fields__
+		d = self.__dict__
 
+		# Aliases
+		if '_id' in kwargs:
+			d['id'] = kwargs['_id']
 
-	def get_compound_id(self):
-		""" """
-		return self.compound_id
-
-
-	def has_error(self):
-		""" """
-		return self.info.get('hasError', False)
+		for k in fields:
+			if k in kwargs:
+				d[k] = kwargs[k]
+			else:
+				if k in d: # field value already set by aliases
+					continue
+				if '__args__' in fields[k].type.__dict__ and none_type in fields[k].type.__args__:
+					d[k] = None
+					continue # Optional type
+				# No default value
+				if fields[k].default.__class__ is _MISSING_TYPE:
+					raise ValueError(f"Value missing for field '{k}'")
+				d[k] = fields[k].default
