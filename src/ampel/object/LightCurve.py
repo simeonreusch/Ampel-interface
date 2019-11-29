@@ -1,14 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/base/LightCurve.py
+# File              : ampel/object/LightCurve.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 13.01.2018
-# Last Modified Date: 24.06.2018
+# Last Modified Date: 28.11.2019
 # Last Modified By  : vb <vbrinnel@physik.hu-berlin.de>
 
 import operator
+from bson import Binary
+from logging import Logger
 from ampel.base.Frozen import Frozen
+from typing import Dict, Optional, List, Any, Tuple
+from ampel.object.PlainPhotoPoint import PlainPhotoPoint
+from ampel.object.PlainUpperLimit import PlainUpperLimit
 
 class LightCurve(Frozen):
 	"""
@@ -32,20 +37,19 @@ class LightCurve(Frozen):
 	}
 
 	
-	def __init__(self, compound_id, ppo_list, ulo_list=None, info=None, read_only=True, logger=None):
+	def __init__(
+		self, compound_id: Binary, ppo_list: List[PlainPhotoPoint], 
+		ulo_list: Optional[List[PlainUpperLimit]] = None, 
+		info: Optional[Dict[str, Any]] = None, 
+		read_only: bool = True, logger: Logger = None
+	):
 		"""
-		Mandatory arguments:
 		compound_id: instance of bson.Binary (subtype: 5)
-		ppo_list: list of ampel.base.core.PhotoPoint instances
-
-		Optional arguments:
-		ulo_list: list of ampel.base.core.UpperLimit instances
 		info: dict instance with additional info ('added', 'tier', ...)
-		read_only: wether the provided list should be casted as immutable tuple
-		and the class instance frozen.
+		read_only: whether the provided list should be casted into an
+		immutable tuple and the class instance frozen.
 		NOTE: it is up to the loader class to make sure the PhotoPoint and UpperLimit objects
-		provided to this constructor are frozen classes, if so whished.
-		logger: instance of Logger from python module 'logging'
+		provided to this constructor are frozen classes, if so wished.
 		"""
 
 		self.id = compound_id
@@ -66,13 +70,19 @@ class LightCurve(Frozen):
 				(len(self.ppo_list), len(self.ulo_list))
 			)
 
-	def serialize(self):
+
+	def serialize(self) -> Dict[str, Any]:
+		""" """
 		fields = ["id", "ppo_list", "ulo_list", "info"]
 		rep = {k: getattr(self, k) for k in fields}
 		rep['compound_id'] = rep.pop('id')
 		return rep
 
-	def get_values(self, field_name, filters=None, upper_limits=False):
+
+	def get_values(
+		self, field_name: str, filters: Optional[Dict[str, Any]] = None, 
+		upper_limits: bool = False
+	) -> List[Any]:
 		"""
 		ex: instance.get_values('obs_date')
 		'filters' example: {'attribute': 'magpsf', 'operator': '<', 'value': 18}
@@ -85,7 +95,10 @@ class LightCurve(Frozen):
 		]
 
 
-	def get_tuples(self, field1_name, field2_name, filters=None, upper_limits=False):
+	def get_tuples(
+		self, field1_name: str, field2_name: str, 
+		filters: Optional[Dict[str, Any]] = None, upper_limits: bool = False
+	) -> List[Tuple]:
 		"""
 		ex: instance.get_values('obs_date', 'mag')
 		'filters' example: {'attribute': 'magpsf', 'operator': '<', 'value': 18}
@@ -98,7 +111,10 @@ class LightCurve(Frozen):
 		]
 
 
-	def get_ntuples(self, params, filters=None, upper_limits=False):
+	def get_ntuples(
+		self, params: List[str], filters: Optional[Dict[str, Any]] = None, 
+		upper_limits: bool = False
+	) -> List[Tuple]:
 		"""
 		params: list of strings
 		ex: instance.get_ntuples(["fid", "obs_date", "mag"])
@@ -112,7 +128,7 @@ class LightCurve(Frozen):
 		)
 
 	
-	def get_photopoints(self, filters=None):
+	def get_photopoints(self, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
 		""" returns a list of dicts """
 		return (
 			self._apply_filter(self.ppo_list, filters) if filters is not None 
@@ -120,7 +136,7 @@ class LightCurve(Frozen):
 		)
 
 
-	def get_upperlimits(self, filters=None):
+	def get_upperlimits(self, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
 		""" returns a list of dicts """
 		return (
 			self._apply_filter(self.ulo_list, filters) if filters is not None 
@@ -129,7 +145,9 @@ class LightCurve(Frozen):
 
 
 	# TODO: improve
-	def get_pos(self, ret="brightest", filters=None):
+	def get_pos(
+		self, ret: str = "brightest", filters: Optional[Dict[str, Any]] = None
+	) -> Tuple[int]:
 		"""
 		ret (for all methods, only matching PhotoPoint wrt the provided filter(s) are used!):
 		"raw": returns ((ra, dec), (ra, dec), ...)
@@ -163,51 +181,55 @@ class LightCurve(Frozen):
 			decs = [pp.get_value("dec") for pp in pps]
 			return (sum(ras)/len(ras), sum(decs)/len(decs))
 
-		elif ret == "brightest": 
+		if ret == "brightest": 
 			mags = list(pps)
 			mags.sort(key=lambda x: x.get_value('magpsf'))
 			return (mags[-1].get_value('ra'), mags[-1].get_value('dec'))
 
-		elif ret == "latest": 
+		if ret == "latest": 
 			mags = list(pps)
 			mags.sort(key=lambda x: x.get_value('obs_date'))
 			return (mags[-1].get_value('ra'), mags[-1].get_value('dec'))
 
-		else:
-			raise NotImplementedError("ret method: %s is not implemented" % ret)
+		raise NotImplementedError("ret method: %s is not implemented" % ret)
 
 
-	def _get_photo_objs(self, filters, upper_limits):
-		"""	
-		"""	
+	def _get_photo_objs(
+		self, filters: Dict[str, Any], upper_limits: bool
+	) -> List[Dict[str, Any]]:
+		"""	"""	
+
 		if filters is None:
 			return self.ulo_list if upper_limits else self.ppo_list
-		else:
-			return (
-				self._apply_filter(self.ulo_list, filters) if upper_limits 
-				else self._apply_filter(self.ppo_list, filters)
-			)
+
+		return (
+			self._apply_filter(self.ulo_list, filters) if upper_limits 
+			else self._apply_filter(self.ppo_list, filters)
+		)
 
 
-	def _apply_filter(self, match_objs, filters):
-		"""
-		"""
-		if type(filters) is dict:
+	@staticmethod
+	def _apply_filter(
+		match_objs: List[Dict[str, Any]], filters: Dict[str, Any]
+	) -> List[Dict[str, Any]]:
+		""" """
+
+		if isinstance(filters, dict):
 			filters = [filters]
 		else:
-			if filters is None or type(filters) is not list:
+			if filters is None or not isinstance(filters, list):
 				raise ValueError("filters must be of type dict or list")
 
 		for filter_el in filters:
 
-			operator = LightCurve._ops[
+			op = LightCurve._ops[
 				filter_el['operator']
 			]
 
 			attr_name = filter_el['attribute']
 			match_objs = tuple(
 				filter(
-					lambda x: x.has_parameter(attr_name) and operator(x.get_value(attr_name), filter_el['value']), 
+					lambda x: x.has_parameter(attr_name) and op(x.get_value(attr_name), filter_el['value']), 
 					match_objs
 				)
 			)
