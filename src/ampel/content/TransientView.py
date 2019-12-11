@@ -282,7 +282,7 @@ class TransientView(Frozen):
 
 
 	@staticmethod
-	def content_summary(tran_view: TransientView) -> str:
+	def content_summary(tran_view: 'TransientView') -> str:
 		"""
 		:param tran_view: instance of ampel.object.TransientView
 		:returns: str
