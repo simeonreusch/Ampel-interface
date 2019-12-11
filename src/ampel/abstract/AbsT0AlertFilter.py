@@ -9,7 +9,7 @@
 
 from typing import Set, Optional, Sequence
 from pydantic import validator
-from ampel.model.UnitData import UnitData
+from ampel.model.UnitModel import UnitModel
 from ampel.object.AmpelAlert import AmpelAlert
 from ampel.abstract.AmpelABC import abstractmethod
 from ampel.abstract.AbsAmpelUnit import AbsAmpelUnit
@@ -24,7 +24,7 @@ class AbsT0AlertFilter(AbsAmpelUnit, abstract=True):
 	class InitConfig(AmpelBaseModel):
 		""" 
 		"""
-		t2_compute: Optional[Sequence[UnitData]]
+		t2_compute: Optional[Sequence[UnitModel]]
 		on_match_t2_units: Optional[Sequence[str]] = ()
 
 

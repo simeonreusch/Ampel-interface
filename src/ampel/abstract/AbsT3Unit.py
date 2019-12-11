@@ -10,8 +10,8 @@
 from typing import Sequence
 from ampel.abstract.AmpelABC import abstractmethod
 from ampel.abstract.AbsAmpelUnit import AbsAmpelUnit
-from ampel.base.dataclass.JournalUpdate import JournalUpdate
-#from ampel.base.dataclass.GlobalInfo import GlobalInfo
+from ampel.dataclass.JournalUpdate import JournalUpdate
+#from ampel.dataclass.GlobalInfo import GlobalInfo
 
 class AbsT3Unit(AbsAmpelUnit, abstract=True):
 	"""
