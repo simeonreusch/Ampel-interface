@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/object/Observatory.py
+# File              : ampel/utils/Observatory.py
 # License           : BSD-3-Clause
 # Author            : matteo.giomi@desy.de
 # Date              : 19.08.2018
