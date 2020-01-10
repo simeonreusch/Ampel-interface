@@ -9,6 +9,7 @@
 
 from dataclasses import dataclass, _MISSING_TYPE
 from typing import Any, Sequence, Union, Optional, Dict
+from ampel.typing import StockId
 
 none_type = type(None)
 
@@ -17,7 +18,7 @@ class Compound:
 
 	id: Union[int, str, Dict]
 	tags: Optional[Sequence[Union[int, str]]]
-	stock: Union[int, str, Sequence[Union[int, str]]]
+	stock: Union[StockId, Sequence[StockId]]
 	channels: Sequence[Union[int, str]]
 	data: Sequence[Dict[str, Any]]
 	added: float
@@ -41,7 +42,7 @@ class Compound:
 			else:
 				if k in d: # field value already set by aliases
 					continue
-				if '__args__' in fields[k].type.__dict__ and none_type in fields[k].type.__args__:
+				if '__args__' in fields[k].type.__dict__ and none_type in fields[k].type.__args__: # type: ignore
 					d[k] = None
 					continue # Optional type
 				# No default value
