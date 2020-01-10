@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# File              : ampel/content/ScienceRecord.py
+# File              : ampel/content/T2Record.py
 # License           : BSD-3-Clause
 # Author            : vb <vbrinnel@physik.hu-berlin.de>
 # Date              : 13.01.2018
@@ -13,7 +13,7 @@ none_type = type(None)
 
 
 @dataclass(frozen=True)
-class ScienceRecord:
+class T2Record:
 
 	id: bytes
 	unit: Union[int, str] # int to enable future potential hash optimizations
@@ -43,9 +43,10 @@ class ScienceRecord:
 			else:
 				if k in d: # field value already set by aliases
 					continue
-				if '__args__' in fields[k].type.__dict__ and none_type in fields[k].type.__args__:
+				# Optional type
+				if '__args__' in fields[k].type.__dict__ and none_type in fields[k].type.__args__: # type: ignore
 					d[k] = None
-					continue # Optional type
+					continue
 				# No default value
 				if fields[k].default.__class__ is _MISSING_TYPE:
 					raise ValueError(f"Value missing for field '{k}'")
